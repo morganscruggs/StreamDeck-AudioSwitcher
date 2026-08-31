@@ -66,6 +66,15 @@
         <option value="Fuzzy">Fuzzy</option>
       </select>
     </div>
+    <div type="checkbox" class="sdpi-item">
+      <div class="sdpi-item-label">Device list</div>
+      <div class="sdpi-item-value">
+        <span class="sdpi-item-child">
+          <input id="hideUnavailable" type="checkbox" onchange="updateHideUnavailable();" />
+          <label for="hideUnavailable" class="sdpi-item-label"><span></span>Hide disabled/unplugged devices</label>
+        </span>
+      </div>
+    </div>
   </div>
 
   <script src="common.js"></script>
@@ -113,6 +122,8 @@
           child.removeAttribute("selected");
         }
       }
+
+      document.getElementById('hideUnavailable').checked = settings.hideUnavailable !== false;
 
       inputDevices = payload['inputDevices'];
       outputDevices = payload['outputDevices'];
@@ -168,7 +179,14 @@
         const isPrimary = (deviceId === primaryId);
         const isSecondary = (deviceId === secondaryId);
 
-        if (device.state !== "connected" && device.state !== "device_present_no_connection" && !(isPrimary || isSecondary)) {
+        // "device_not_present" devices are never useful to pick manually,
+        // so they're always excluded here; if one is still the current
+        // selection, it's preserved as a single option via the
+        // primaryId/secondaryId fallback below instead.
+        const hideUnavailable = document.getElementById('hideUnavailable').checked;
+        const isShownByDefault = device.state === "connected"
+          || (!hideUnavailable && device.state === "device_present_no_connection");
+        if (!isShownByDefault) {
           return;
         }
 
@@ -228,6 +246,12 @@
       saveSettings();
     }
 
+    function updateHideUnavailable() {
+      const isInput = document.getElementById('input').checked;
+      updateDeviceLists(isInput ? inputDevices : outputDevices);
+      saveSettings();
+    }
+
     function connected(jsonObj) {
       uuid = jsonObj.uuid;
       actionInfo = jsonObj.actionInfo.action;
@@ -263,6 +287,7 @@
         settings.role = 'default';
       }
       settings.matchStrategy = document.getElementById('matchStrategy').value;
+      settings.hideUnavailable = document.getElementById('hideUnavailable').checked;
       console.log(settings);
       $SD.api.setSettings(uuid, settings);
     }
