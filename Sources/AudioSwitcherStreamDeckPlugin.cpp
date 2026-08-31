@@ -33,6 +33,46 @@ using namespace FredEmmott::Audio;
 using json = nlohmann::json;
 
 namespace {
+
+ButtonRole ButtonRoleFromAudioDeviceRole(const AudioDeviceRole role) {
+  switch (role) {
+    case AudioDeviceRole::COMMUNICATION:
+      return ButtonRole::COMMUNICATION;
+    case AudioDeviceRole::DEFAULT:
+      return ButtonRole::DEFAULT;
+  }
+  return ButtonRole::DEFAULT;
+}
+
+AudioDeviceRole AudioDeviceRoleFromButtonRole(const ButtonRole role) {
+  switch (role) {
+    case ButtonRole::COMMUNICATION:
+      return AudioDeviceRole::COMMUNICATION;
+    case ButtonRole::ALL:
+    case ButtonRole::DEFAULT:
+    default:
+      return AudioDeviceRole::DEFAULT;
+  }
+}
+
+bool IsRoleActive(
+  const ButtonSettings& settings,
+  const std::string& deviceID,
+  const std::string& defaultDeviceID = {}) {
+  if (settings.role == ButtonRole::ALL) {
+    const auto defaultID = defaultDeviceID.empty()
+      ? GetDefaultAudioDeviceID(settings.direction, AudioDeviceRole::DEFAULT)
+      : defaultDeviceID;
+    const auto communicationID = GetDefaultAudioDeviceID(
+      settings.direction,
+      AudioDeviceRole::COMMUNICATION);
+    return deviceID == defaultID || deviceID == communicationID;
+  }
+  return deviceID == GetDefaultAudioDeviceID(
+    settings.direction,
+    AudioDeviceRoleFromButtonRole(settings.role));
+}
+
 constexpr std::string_view SET_ACTION_ID{
   "com.fredemmott.audiooutputswitch.set"};
 constexpr std::string_view TOGGLE_ACTION_ID{
@@ -78,7 +118,9 @@ void AudioSwitcherStreamDeckPlugin::OnDefaultDeviceChanged(
     if (button.settings.direction != direction) {
       continue;
     }
-    if (button.settings.role != role) {
+    const auto buttonRole = ButtonRoleFromAudioDeviceRole(role);
+    if (button.settings.role != ButtonRole::ALL
+        && button.settings.role != buttonRole) {
       continue;
     }
     UpdateState(context, device);
@@ -129,17 +171,47 @@ void AudioSwitcherStreamDeckPlugin::KeyUpForAction(
     return;
   }
 
-  if (
-    inAction == SET_ACTION_ID
-    && deviceID == GetDefaultAudioDeviceID(settings.direction, settings.role)) {
-    // We already have the correct device, undo the state change
-    mConnectionManager->SetState(state, inContext);
-    ESDDebug("Already set, nothing to do");
-    return;
+  if (inAction == SET_ACTION_ID) {
+    if (settings.role == ButtonRole::ALL) {
+      const auto alreadySet = deviceID == GetDefaultAudioDeviceID(
+                                settings.direction,
+                                AudioDeviceRole::DEFAULT)
+        && deviceID == GetDefaultAudioDeviceID(
+          settings.direction,
+          AudioDeviceRole::COMMUNICATION);
+      if (alreadySet) {
+        // We already have the correct device, undo the state change
+        mConnectionManager->SetState(state, inContext);
+        ESDDebug("Already set, nothing to do");
+        return;
+      }
+    } else if (
+      deviceID
+      == GetDefaultAudioDeviceID(
+        settings.direction,
+        AudioDeviceRoleFromButtonRole(settings.role))) {
+      mConnectionManager->SetState(state, inContext);
+      ESDDebug("Already set, nothing to do");
+      return;
+    }
   }
 
   ESDDebug("Setting device to {}", deviceID);
-  SetDefaultAudioDeviceID(settings.direction, settings.role, deviceID);
+  if (settings.role == ButtonRole::ALL) {
+    SetDefaultAudioDeviceID(
+      settings.direction,
+      AudioDeviceRole::DEFAULT,
+      deviceID);
+    SetDefaultAudioDeviceID(
+      settings.direction,
+      AudioDeviceRole::COMMUNICATION,
+      deviceID);
+    return;
+  }
+  SetDefaultAudioDeviceID(
+    settings.direction,
+    AudioDeviceRoleFromButtonRole(settings.role),
+    deviceID);
 }
 
 void AudioSwitcherStreamDeckPlugin::WillAppearForAction(
@@ -216,16 +288,34 @@ void AudioSwitcherStreamDeckPlugin::UpdateState(
   const auto button = mButtons[context];
   const auto action = button.action;
   const auto settings = button.settings;
-  const auto activeDevice = optionalDefaultDevice.empty()
-    ? GetDefaultAudioDeviceID(settings.direction, settings.role)
-    : optionalDefaultDevice;
-
   const auto primaryID = settings.VolatilePrimaryID();
   const auto secondaryID = settings.VolatileSecondaryID();
 
+  std::string activeDevice;
+  if (!optionalDefaultDevice.empty()) {
+    activeDevice = optionalDefaultDevice;
+  } else if (settings.role == ButtonRole::ALL) {
+    activeDevice = GetDefaultAudioDeviceID(
+      settings.direction,
+      AudioDeviceRole::DEFAULT);
+    if (activeDevice.empty() || activeDevice == secondaryID || activeDevice == primaryID) {
+      activeDevice = GetDefaultAudioDeviceID(
+        settings.direction,
+        AudioDeviceRole::COMMUNICATION);
+    }
+  } else {
+    activeDevice = GetDefaultAudioDeviceID(
+      settings.direction,
+      AudioDeviceRoleFromButtonRole(settings.role));
+  }
+
   std::scoped_lock lock(mVisibleContextsMutex);
   if (action == SET_ACTION_ID) {
-    mConnectionManager->SetState(activeDevice == primaryID ? 0 : 1, context);
+    mConnectionManager->SetState(
+      activeDevice == primaryID || (settings.role == ButtonRole::ALL && activeDevice == primaryID)
+        ? 0
+        : 1,
+      context);
     return;
   }
 

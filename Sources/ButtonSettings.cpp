@@ -19,6 +19,33 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
     {DeviceMatchStrategy::Fuzzy, "Fuzzy"},
   });
 
+void from_json(const nlohmann::json& j, ButtonRole& role) {
+  if (j == "communication") {
+    role = ButtonRole::COMMUNICATION;
+    return;
+  }
+  if (j == "all") {
+    role = ButtonRole::ALL;
+    return;
+  }
+  role = ButtonRole::DEFAULT;
+}
+
+void to_json(nlohmann::json& j, const ButtonRole& role) {
+  switch (role) {
+    case ButtonRole::COMMUNICATION:
+      j = "communication";
+      return;
+    case ButtonRole::ALL:
+      j = "all";
+      return;
+    case ButtonRole::DEFAULT:
+    default:
+      j = "default";
+      return;
+  }
+}
+
 void from_json(const nlohmann::json& j, ButtonSettings& bs) {
   if (!j.contains("direction")) {
     return;

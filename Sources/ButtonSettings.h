@@ -16,9 +16,15 @@ enum class DeviceMatchStrategy {
   Fuzzy,
 };
 
+enum class ButtonRole {
+  DEFAULT,
+  COMMUNICATION,
+  ALL,
+};
+
 struct ButtonSettings {
   AudioDeviceDirection direction = AudioDeviceDirection::INPUT;
-  AudioDeviceRole role = AudioDeviceRole::DEFAULT;
+  ButtonRole role = ButtonRole::DEFAULT;
   AudioDeviceInfo primaryDevice;
   AudioDeviceInfo secondaryDevice;
   DeviceMatchStrategy matchStrategy = DeviceMatchStrategy::ID;
