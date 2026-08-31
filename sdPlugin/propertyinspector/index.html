@@ -143,6 +143,13 @@
       saveSettings();
     }
 
+    function stripNumberPrefix(name) {
+      // Windows likes to replace "Foo" with "2- Foo", either as the whole
+      // interface name or embedded as "Endpoint (2- Foo)"; mirrors
+      // FuzzifyInterface() in ButtonSettings.cpp, but for display only.
+      return name.replace(/(^|\()[0-9]+- /, '$1');
+    }
+
     function updateDeviceLists(devices) {
       const primarySelector = document.getElementById('primaryDevice');
       const secondarySelector = document.getElementById('secondaryDevice');
@@ -201,7 +208,7 @@
         }
 
         const hideDeviceType = document.getElementById('hideDeviceType').checked;
-        const displayName = (hideDeviceType ? device.interfaceName : device.displayName) + {
+        const displayName = stripNumberPrefix(hideDeviceType ? device.interfaceName : device.displayName) + {
           "connected": "",
           "device_present_no_connection": " (unplugged)",
           "device_not_present": " (not present)",
