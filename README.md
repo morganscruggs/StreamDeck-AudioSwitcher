@@ -31,6 +31,12 @@ Both "Set Audio Device" and "Toggle Audio Device" buttons let you pick an icon (
 
 Icon choices are picked up automatically from `AudioDevicesIcons/` inside the plugin folder; each file must be a white silhouette on a transparent background (the colors above are applied by recoloring the shape at runtime, not by swapping images), and its filename becomes the option's name in the picker. Drop in a new `<name>.png` file to add another choice without any code changes.
 
+# Release 0.1.0
+
+This is the first release of Audio Switcher Plus as its own product, forked and rebranded from Fred Emmott's original Audio Switcher. The core device-switching logic is unchanged from the upstream project and has years of real-world use behind it; everything listed above under "(new)" - custom icons/colors, hiding disabled devices, hiding device type, and the "All" role - is new in this release and hasn't had the same amount of testing yet. If something regresses, [check the troubleshooting guide](TROUBLESHOOTING.md) or open an issue.
+
+**A note on Windows App Control:** this build is not yet code-signed. On Windows 11 systems with **Smart App Control** enabled (Settings > Privacy & security > Windows Security > App & browser control), an unsigned, newly-built executable like this one can be blocked from running entirely - Stream Deck will show the button, but the plugin itself never actually starts, so device lists stay empty and buttons never update. This isn't a bug in the plugin so much as a Windows security feature reacting to the lack of a signature; see [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for how to confirm it and your options. Proper code signing is planned for a future release.
+
 # Video Demo
 
 [![YouTube Demo Video](https://img.youtube.com/vi/Y5avo5WrwwM/0.jpg)](https://www.youtube.com/watch?v=Y5avo5WrwwM)
