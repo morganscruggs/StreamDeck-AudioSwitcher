@@ -43,6 +43,10 @@
           <input id="communicationRole" type="radio" name="role" value="communication" onchange="saveSettings();" />
           <label for="communicationRole" class="sdpi-item-label"><span></span>Communications</label>
         </span>
+        <span class="sdpi-item-child">
+          <input id="allRole" type="radio" name="role" value="all" onchange="saveSettings();" />
+          <label for="allRole" class="sdpi-item-label"><span></span>All</label>
+        </span>
       </div>
     </div>
     <div type="select" class="sdpi-item" id="primaryDeviceDiv">
@@ -61,6 +65,24 @@
         <option value="ID">Exact</option>
         <option value="Fuzzy">Fuzzy</option>
       </select>
+    </div>
+    <div type="checkbox" class="sdpi-item">
+      <div class="sdpi-item-label">Device list</div>
+      <div class="sdpi-item-value">
+        <span class="sdpi-item-child">
+          <input id="hideUnavailable" type="checkbox" onchange="updateHideUnavailable();" />
+          <label for="hideUnavailable" class="sdpi-item-label"><span></span>Hide disabled/unplugged devices</label>
+        </span>
+      </div>
+    </div>
+    <div type="checkbox" class="sdpi-item">
+      <div class="sdpi-item-label"></div>
+      <div class="sdpi-item-value">
+        <span class="sdpi-item-child">
+          <input id="hideDeviceType" type="checkbox" onchange="updateHideDeviceType();" />
+          <label for="hideDeviceType" class="sdpi-item-label"><span></span>Hide device type</label>
+        </span>
+      </div>
     </div>
   </div>
 
@@ -110,12 +132,22 @@
         }
       }
 
+      document.getElementById('hideUnavailable').checked = settings.hideUnavailable !== false;
+      document.getElementById('hideDeviceType').checked = !!settings.hideDeviceType;
+
       inputDevices = payload['inputDevices'];
       outputDevices = payload['outputDevices'];
 
       updateDeviceLists(isInput ? inputDevices : outputDevices);
       document.getElementById('mainWrapper').classList.remove('hidden');
       saveSettings();
+    }
+
+    function stripNumberPrefix(name) {
+      // Windows likes to replace "Foo" with "2- Foo", either as the whole
+      // interface name or embedded as "Endpoint (2- Foo)"; mirrors
+      // FuzzifyInterface() in ButtonSettings.cpp, but for display only.
+      return name.replace(/(^|\()[0-9]+- /, '$1');
     }
 
     function updateDeviceLists(devices) {
@@ -164,11 +196,19 @@
         const isPrimary = (deviceId === primaryId);
         const isSecondary = (deviceId === secondaryId);
 
-        if (device.state !== "connected" && device.state !== "device_present_no_connection" && !(isPrimary || isSecondary)) {
+        // "device_not_present" devices are never useful to pick manually,
+        // so they're always excluded here; if one is still the current
+        // selection, it's preserved as a single option via the
+        // primaryId/secondaryId fallback below instead.
+        const hideUnavailable = document.getElementById('hideUnavailable').checked;
+        const isShownByDefault = device.state === "connected"
+          || (!hideUnavailable && device.state === "device_present_no_connection");
+        if (!isShownByDefault) {
           return;
         }
 
-        const displayName = device.displayName + {
+        const hideDeviceType = document.getElementById('hideDeviceType').checked;
+        const displayName = stripNumberPrefix(hideDeviceType ? device.interfaceName : device.displayName) + {
           "connected": "",
           "device_present_no_connection": " (unplugged)",
           "device_not_present": " (not present)",
@@ -224,6 +264,18 @@
       saveSettings();
     }
 
+    function updateHideUnavailable() {
+      const isInput = document.getElementById('input').checked;
+      updateDeviceLists(isInput ? inputDevices : outputDevices);
+      saveSettings();
+    }
+
+    function updateHideDeviceType() {
+      const isInput = document.getElementById('input').checked;
+      updateDeviceLists(isInput ? inputDevices : outputDevices);
+      saveSettings();
+    }
+
     function connected(jsonObj) {
       uuid = jsonObj.uuid;
       actionInfo = jsonObj.actionInfo.action;
@@ -259,6 +311,8 @@
         settings.role = 'default';
       }
       settings.matchStrategy = document.getElementById('matchStrategy').value;
+      settings.hideUnavailable = document.getElementById('hideUnavailable').checked;
+      settings.hideDeviceType = document.getElementById('hideDeviceType').checked;
       console.log(settings);
       $SD.api.setSettings(uuid, settings);
     }
