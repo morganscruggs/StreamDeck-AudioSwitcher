@@ -37,9 +37,9 @@
   "Description": "Toggle or set the active audio devices. Fork of Fred Emmott's Audio Switcher (github.com/fredemmott).",
   "Name": "Audio Switcher Plus",
   "PropertyInspectorPath": "propertyinspector/index.html",
-  "Icon": "headphones",
+  "Icon": "AudioDevicesIcons/headphones_bright",
   "Category": "Audio Devices Plus",
-  "CategoryIcon": "glyphicons-basic-140-adjust",
+  "CategoryIcon": "AudioDevicesIcons/speaker_bright",
   "Version": "${CMAKE_PROJECT_VERSION}",
   "OS": [
     {
