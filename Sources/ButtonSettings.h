@@ -24,10 +24,10 @@ enum class ButtonRole {
 
 struct ButtonSettings {
   AudioDeviceDirection direction = AudioDeviceDirection::INPUT;
-  ButtonRole role = ButtonRole::DEFAULT;
+  ButtonRole role = ButtonRole::ALL;
   AudioDeviceInfo primaryDevice;
   AudioDeviceInfo secondaryDevice;
-  DeviceMatchStrategy matchStrategy = DeviceMatchStrategy::ID;
+  DeviceMatchStrategy matchStrategy = DeviceMatchStrategy::Fuzzy;
   // Lowercase ID of a bright/dark icon pair in AudioDevicesIcons/, or
   // empty to use the plugin's built-in default icon. Used by the "Set"
   // action.

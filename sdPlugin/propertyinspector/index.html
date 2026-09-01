@@ -6,6 +6,16 @@
   <meta charset="utf-8" />
   <link rel="stylesheet" href="css/sdpi.css">
   <style>
+    /* sdpi.css's own .sdpi-item rule (display: flex) is defined after its
+       .hidden rule (display: none) in the same file; both are single-class
+       selectors, so on a tie CSS source order wins and .sdpi-item silently
+       overrides .hidden on any element carrying both classes. Redeclaring
+       .hidden here - after the sdpi.css <link> - wins the same tie the
+       other way, so hidden .sdpi-item rows actually stay hidden. */
+    .hidden {
+      display: none;
+    }
+
     .platform-mac .windows-only {
       display: none;
     }
@@ -58,6 +68,28 @@
 
 <body>
   <div class="sdpi-wrapper hidden" id="mainWrapper">
+    <div type="select" class="sdpi-item" id="primaryDeviceDiv">
+      <div class="sdpi-item-label">Primary</div>
+      <select class="sdpi-item-value select" id="primaryDevice" onchange="saveSettings();">
+      </select>
+    </div>
+    <div type="select" class="sdpi-item hidden" id="iconDiv">
+      <div class="sdpi-item-label">Icon</div>
+      <div class="sdpi-item-value icon-picker" id="iconPicker"></div>
+    </div>
+    <div type="select" class="sdpi-item hidden" id="primaryIconDiv">
+      <div class="sdpi-item-label">Primary Icon</div>
+      <div class="sdpi-item-value icon-picker" id="primaryIconPicker"></div>
+    </div>
+    <div type="select" class="sdpi-item" id="secondaryDeviceDiv">
+      <div class="sdpi-item-label">Secondary</div>
+      <select class="sdpi-item-value select" id="secondaryDevice" onchange="saveSettings();">
+      </select>
+    </div>
+    <div type="select" class="sdpi-item hidden" id="secondaryIconDiv">
+      <div class="sdpi-item-label">Secondary Icon</div>
+      <div class="sdpi-item-value icon-picker" id="secondaryIconPicker"></div>
+    </div>
     <div type="radio" class="sdpi-item">
       <div class="sdpi-item-label">Direction</div>
       <div class="sdpi-item-value">
@@ -86,21 +118,7 @@
           <input id="communicationRole" type="radio" name="role" value="communication" onchange="saveSettings();" />
           <label for="communicationRole" class="sdpi-item-label"><span></span>Communications</label>
         </span>
-        <span class="sdpi-item-child">
-          <input id="allRole" type="radio" name="role" value="all" onchange="saveSettings();" />
-          <label for="allRole" class="sdpi-item-label"><span></span>All</label>
-        </span>
       </div>
-    </div>
-    <div type="select" class="sdpi-item" id="primaryDeviceDiv">
-      <div class="sdpi-item-label">Primary</div>
-      <select class="sdpi-item-value select" id="primaryDevice" onchange="saveSettings();">
-      </select>
-    </div>
-    <div type="select" class="sdpi-item" id="secondaryDeviceDiv">
-      <div class="sdpi-item-label">Secondary</div>
-      <select class="sdpi-item-value select" id="secondaryDevice" onchange="saveSettings();">
-      </select>
     </div>
     <div type="select" class="sdpi-item">
       <div class="sdpi-item-label">Device matching</div>
@@ -108,18 +126,6 @@
         <option value="ID">Exact</option>
         <option value="Fuzzy">Fuzzy</option>
       </select>
-    </div>
-    <div type="select" class="sdpi-item hidden" id="iconDiv">
-      <div class="sdpi-item-label">Icon</div>
-      <div class="sdpi-item-value icon-picker" id="iconPicker"></div>
-    </div>
-    <div type="select" class="sdpi-item hidden" id="primaryIconDiv">
-      <div class="sdpi-item-label">Primary Icon</div>
-      <div class="sdpi-item-value icon-picker" id="primaryIconPicker"></div>
-    </div>
-    <div type="select" class="sdpi-item hidden" id="secondaryIconDiv">
-      <div class="sdpi-item-label">Secondary Icon</div>
-      <div class="sdpi-item-value icon-picker" id="secondaryIconPicker"></div>
     </div>
     <div type="checkbox" class="sdpi-item">
       <div class="sdpi-item-label">Device list</div>
@@ -180,13 +186,14 @@
       document.getElementById('input').checked = isInput;
       document.getElementById('output').checked = !isInput;
 
-      const isCommunication = settings.role == "communication";
-      const isAll = settings.role == "all";
+      const role = settings.role || "all";
+      const isCommunication = role == "communication";
+      const isAll = role == "all";
       document.getElementById('communicationRole').checked = isCommunication;
       document.getElementById('defaultRole').checked = !isCommunication && !isAll;
       document.getElementById('allRole').checked = isAll;
 
-      const matchStrategy = settings.matchStrategy || "ID";
+      const matchStrategy = settings.matchStrategy || "Fuzzy";
       for (const child of document.getElementById('matchStrategy').children) {
         if (child.value == matchStrategy) {
           child.setAttribute("selected", "selected");
@@ -399,6 +406,16 @@
       settings = jsonObj.actionInfo.payload.settings;
       const platform = jsonObj.applicationInfo.application.platform;
       document.getElementById('mainWrapper').classList.add(`platform-${platform}`);
+
+      // Reset before selectively unhiding below - the property inspector's
+      // page/DOM can be reused across button switches rather than reloaded
+      // from scratch, so mutations from a previously-viewed button must not
+      // persist into this one.
+      document.querySelector('#primaryDeviceDiv .sdpi-item-label').innerText = 'Primary';
+      document.getElementById('secondaryDeviceDiv').style.display = '';
+      document.getElementById('iconDiv').classList.add('hidden');
+      document.getElementById('primaryIconDiv').classList.add('hidden');
+      document.getElementById('secondaryIconDiv').classList.add('hidden');
 
       if (actionInfo == "com.morganscruggs.audioswitcherplus.set") {
         document.querySelector('#primaryDeviceDiv .sdpi-item-label').innerText = 'Device';
