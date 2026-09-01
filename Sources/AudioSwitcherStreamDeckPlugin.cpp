@@ -29,15 +29,20 @@ LICENSE file.
 
 #include <websocketpp/base64/base64.hpp>
 
+#include "ThirdParty/stb_image.h"
+#include "ThirdParty/stb_image_write.h"
+
 #include <algorithm>
 #include <atomic>
 #include <cctype>
+#include <cstdlib>
 #include <fstream>
 #include <functional>
 #include <iterator>
 #include <mutex>
 #include <optional>
 #include <set>
+#include <vector>
 
 #ifdef _MSC_VER
 #include <objbase.h>
@@ -101,23 +106,18 @@ std::string ToLower(std::string s) {
   return s;
 }
 
-bool EndsWith(const std::string& s, const std::string& suffix) {
-  return s.size() >= suffix.size()
-    && s.compare(s.size() - suffix.size(), suffix.size(), suffix) == 0;
-}
-
-// Icon files live as `<id>_bright.png` / `<id>_dark.png` pairs; matching is
-// case-insensitive since the files aren't guaranteed to be consistently
-// cased.
+// Icon files live as `<id>.png`; the same artwork is reused and recolored at
+// runtime for both "bright" and "dimmed" states rather than needing separate
+// image files per state. Matching is case-insensitive since the files aren't
+// guaranteed to be consistently cased.
 std::optional<ESD::filesystem::path> FindIconFile(
   const std::string& iconsDirectory,
-  const std::string& iconID,
-  const std::string& suffix) {
+  const std::string& iconID) {
   if (iconsDirectory.empty()) {
     return std::nullopt;
   }
   std::error_code ec;
-  const auto wanted = ToLower(iconID) + suffix;
+  const auto wanted = ToLower(iconID);
   for (const auto& entry :
        ESD::filesystem::directory_iterator(iconsDirectory, ec)) {
     if (!entry.is_regular_file()) {
@@ -151,13 +151,7 @@ json GetAvailableIconSets(const std::string& iconsDirectory) {
     if (ToLower(path.extension().string()) != ".png") {
       continue;
     }
-    const auto stem = ToLower(path.stem().string());
-    for (const std::string& suffix: {"_bright", "_dark"}) {
-      if (EndsWith(stem, suffix)) {
-        ids.insert(stem.substr(0, stem.size() - suffix.size()));
-        break;
-      }
-    }
+    ids.insert(ToLower(path.stem().string()));
   }
 
   for (const auto& id: ids) {
@@ -170,16 +164,82 @@ json GetAvailableIconSets(const std::string& iconsDirectory) {
   return result;
 }
 
-std::string ReadFileAsBase64(const ESD::filesystem::path& path) {
+std::vector<unsigned char> ReadFileBytes(const ESD::filesystem::path& path) {
   ESD::ifstream file(path, std::ios::binary);
   if (!file) {
     return {};
   }
   const std::istreambuf_iterator<char> begin(file), end;
-  const std::string contents(begin, end);
+  return std::vector<unsigned char>(begin, end);
+}
+
+std::string ReadFileAsBase64(const ESD::filesystem::path& path) {
+  const auto bytes = ReadFileBytes(path);
+  return websocketpp::base64_encode(bytes.data(), bytes.size());
+}
+
+struct RGB {
+  unsigned char r, g, b;
+};
+
+// Parses "#RRGGBB" or "RRGGBB"; returns nullopt for anything else, including
+// an empty string (meaning "use the icon's original color").
+std::optional<RGB> ParseHexColor(const std::string& hex) {
+  auto s = hex;
+  if (!s.empty() && s[0] == '#') {
+    s = s.substr(1);
+  }
+  if (s.size() != 6
+      || !std::all_of(s.begin(), s.end(), [](unsigned char c) {
+           return std::isxdigit(c);
+         })) {
+    return std::nullopt;
+  }
+  const auto value = std::strtoul(s.c_str(), nullptr, 16);
+  return RGB {
+    static_cast<unsigned char>((value >> 16) & 0xFF),
+    static_cast<unsigned char>((value >> 8) & 0xFF),
+    static_cast<unsigned char>(value & 0xFF),
+  };
+}
+
+void PngWriteCallback(void* context, void* data, int size) {
+  auto* out = reinterpret_cast<std::string*>(context);
+  out->append(reinterpret_cast<const char*>(data), static_cast<size_t>(size));
+}
+
+// Replaces the RGB of every pixel with `color`, leaving alpha untouched -
+// the icons are monochrome silhouettes, so this recolors the shape while
+// preserving its edge antialiasing.
+std::string RecolorPngAsBase64(
+  const std::vector<unsigned char>& pngBytes,
+  const RGB& color) {
+  int width = 0, height = 0, sourceChannels = 0;
+  unsigned char* pixels = stbi_load_from_memory(
+    pngBytes.data(),
+    static_cast<int>(pngBytes.size()),
+    &width,
+    &height,
+    &sourceChannels,
+    4);
+  if (!pixels) {
+    return {};
+  }
+
+  const auto pixelCount = static_cast<size_t>(width) * height;
+  for (size_t i = 0; i < pixelCount; ++i) {
+    pixels[i * 4 + 0] = color.r;
+    pixels[i * 4 + 1] = color.g;
+    pixels[i * 4 + 2] = color.b;
+  }
+
+  std::string pngOut;
+  stbi_write_png_to_func(
+    &PngWriteCallback, &pngOut, width, height, 4, pixels, width * 4);
+  stbi_image_free(pixels);
+
   return websocketpp::base64_encode(
-    reinterpret_cast<const unsigned char*>(contents.data()),
-    contents.size());
+    reinterpret_cast<const unsigned char*>(pngOut.data()), pngOut.size());
 }
 
 bool FillAudioDeviceInfo(AudioDeviceInfo& di) {
@@ -363,15 +423,23 @@ void ApplyStateImage(
   ESDConnectionManager* connectionManager,
   const std::string& iconsDirectory,
   const std::string& iconID,
-  const std::string& suffix,
+  const std::string& hexColor,
   const std::string& context,
   int state) {
-  const auto file = FindIconFile(iconsDirectory, iconID, suffix);
+  const auto file = FindIconFile(iconsDirectory, iconID);
   if (!file) {
     return;
   }
+
+  const auto color = ParseHexColor(hexColor);
+  const auto base64Image = color
+    ? RecolorPngAsBase64(ReadFileBytes(*file), *color)
+    : ReadFileAsBase64(*file);
+  if (base64Image.empty()) {
+    return;
+  }
   connectionManager->SetImage(
-    ReadFileAsBase64(*file), context, kESDSDKTarget_HardwareAndSoftware, state);
+    base64Image, context, kESDSDKTarget_HardwareAndSoftware, state);
 }
 }// namespace
 
@@ -390,9 +458,25 @@ void AudioSwitcherStreamDeckPlugin::ApplyIcon(const std::string& context) {
       ? std::string {"headphones"}
       : button.settings.icon;
     ApplyStateImage(
-      mConnectionManager, mIconsDirectory, iconID, "_bright", context, 0);
+      mConnectionManager,
+      mIconsDirectory,
+      iconID,
+      button.settings.iconBrightColor,
+      context,
+      0);
+    // Reuses the same artwork for the inactive state rather than a
+    // separate dark image file, recolored neutral grey by default so it
+    // still reads as "dimmed" without needing per-color dark art.
+    const auto& darkColor = button.settings.iconDarkColor.empty()
+      ? std::string {"#606060"}
+      : button.settings.iconDarkColor;
     ApplyStateImage(
-      mConnectionManager, mIconsDirectory, iconID, "_dark", context, 1);
+      mConnectionManager,
+      mIconsDirectory,
+      iconID,
+      darkColor,
+      context,
+      1);
     return;
   }
 
@@ -410,14 +494,14 @@ void AudioSwitcherStreamDeckPlugin::ApplyIcon(const std::string& context) {
       mConnectionManager,
       mIconsDirectory,
       primaryIconID,
-      "_bright",
+      button.settings.primaryIconColor,
       context,
       0);
     ApplyStateImage(
       mConnectionManager,
       mIconsDirectory,
       secondaryIconID,
-      "_bright",
+      button.settings.secondaryIconColor,
       context,
       1);
   }

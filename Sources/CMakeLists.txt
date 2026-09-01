@@ -6,6 +6,7 @@ set(
   AudioSwitcherStreamDeckPlugin.cpp
   ButtonSettings.cpp
   main.cpp
+  stb_impl.cpp
 )
 
 if(WIN32)

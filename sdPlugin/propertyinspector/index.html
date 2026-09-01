@@ -63,6 +63,21 @@
       max-width: 100%;
     }
 
+    .color-input-label {
+      width: auto;
+      margin-right: 4px;
+    }
+
+    input[type="color"] {
+      width: 28px;
+      height: 22px;
+      padding: 0;
+      border: none;
+      background: none;
+      vertical-align: middle;
+      margin-right: 12px;
+    }
+
   </style>
 </head>
 
@@ -77,6 +92,22 @@
       <div class="sdpi-item-label">Icon</div>
       <div class="sdpi-item-value icon-picker" id="iconPicker"></div>
     </div>
+    <div type="select" class="sdpi-item hidden" id="iconColorDiv">
+      <div class="sdpi-item-label">Icon Color</div>
+      <div class="sdpi-item-value">
+        <span class="sdpi-item-child">
+          <label class="color-input-label">On</label>
+          <input type="color" id="iconBrightColor" onchange="updateIconColor('iconBrightColor');" />
+        </span>
+        <span class="sdpi-item-child">
+          <label class="color-input-label">Off</label>
+          <input type="color" id="iconDarkColor" onchange="updateIconColor('iconDarkColor');" />
+        </span>
+        <span class="sdpi-item-child">
+          <a href="#" onclick="resetIconColors(); return false;">Reset</a>
+        </span>
+      </div>
+    </div>
     <div type="select" class="sdpi-item hidden" id="primaryIconDiv">
       <div class="sdpi-item-label">Primary Icon</div>
       <div class="sdpi-item-value icon-picker" id="primaryIconPicker"></div>
@@ -89,6 +120,22 @@
     <div type="select" class="sdpi-item hidden" id="secondaryIconDiv">
       <div class="sdpi-item-label">Secondary Icon</div>
       <div class="sdpi-item-value icon-picker" id="secondaryIconPicker"></div>
+    </div>
+    <div type="select" class="sdpi-item hidden" id="toggleIconColorDiv">
+      <div class="sdpi-item-label">Icon Colors</div>
+      <div class="sdpi-item-value">
+        <span class="sdpi-item-child">
+          <label class="color-input-label">Primary</label>
+          <input type="color" id="primaryIconColor" onchange="updateIconColor('primaryIconColor');" />
+        </span>
+        <span class="sdpi-item-child">
+          <label class="color-input-label">Secondary</label>
+          <input type="color" id="secondaryIconColor" onchange="updateIconColor('secondaryIconColor');" />
+        </span>
+        <span class="sdpi-item-child">
+          <a href="#" onclick="resetIconColors(); return false;">Reset</a>
+        </span>
+      </div>
     </div>
     <div type="radio" class="sdpi-item">
       <div class="sdpi-item-label">Direction</div>
@@ -380,7 +427,7 @@
         if (icon.id === hiddenIconId) {
           return;
         }
-        makeOption(icon.id, icon.label, `../AudioDevicesIcons/${icon.id}_bright.png`);
+        makeOption(icon.id, icon.label, `../AudioDevicesIcons/${icon.id}.png`);
       });
     }
 
@@ -397,6 +444,40 @@
         renderIconPicker('primaryIconPicker', 'primaryIcon', 'headphones');
         renderIconPicker('secondaryIconPicker', 'secondaryIcon', 'speaker');
       }
+      applyIconColorInputs();
+    }
+
+    // Fallback swatches shown when no color has been explicitly chosen yet;
+    // they approximate the icons' original bright/dark tones. Leaving a
+    // color untouched keeps the setting empty, so the plugin uses the
+    // icon file's real, unmodified color rather than this exact swatch.
+    const ICON_COLOR_DEFAULTS = {
+      iconBrightColor: '#ffffff',
+      iconDarkColor: '#606060',
+      primaryIconColor: '#ffffff',
+      secondaryIconColor: '#ffffff',
+    };
+
+    function applyIconColorInputs() {
+      for (const key of Object.keys(ICON_COLOR_DEFAULTS)) {
+        const el = document.getElementById(key);
+        if (el) {
+          el.value = settings[key] || ICON_COLOR_DEFAULTS[key];
+        }
+      }
+    }
+
+    function updateIconColor(settingsKey) {
+      settings[settingsKey] = document.getElementById(settingsKey).value;
+      saveSettings();
+    }
+
+    function resetIconColors() {
+      for (const key of Object.keys(ICON_COLOR_DEFAULTS)) {
+        settings[key] = '';
+      }
+      applyIconColorInputs();
+      saveSettings();
     }
 
     function connected(jsonObj) {
@@ -414,16 +495,20 @@
       document.querySelector('#primaryDeviceDiv .sdpi-item-label').innerText = 'Primary';
       document.getElementById('secondaryDeviceDiv').style.display = '';
       document.getElementById('iconDiv').classList.add('hidden');
+      document.getElementById('iconColorDiv').classList.add('hidden');
       document.getElementById('primaryIconDiv').classList.add('hidden');
       document.getElementById('secondaryIconDiv').classList.add('hidden');
+      document.getElementById('toggleIconColorDiv').classList.add('hidden');
 
       if (actionInfo == "com.morganscruggs.audioswitcherplus.set") {
         document.querySelector('#primaryDeviceDiv .sdpi-item-label').innerText = 'Device';
         document.getElementById('secondaryDeviceDiv').style.display = 'none';
         document.getElementById('iconDiv').classList.remove('hidden');
+        document.getElementById('iconColorDiv').classList.remove('hidden');
       } else if (actionInfo == "com.morganscruggs.audioswitcherplus.toggle") {
         document.getElementById('primaryIconDiv').classList.remove('hidden');
         document.getElementById('secondaryIconDiv').classList.remove('hidden');
+        document.getElementById('toggleIconColorDiv').classList.remove('hidden');
       }
 
       // request settings, list of devices, and list of icons

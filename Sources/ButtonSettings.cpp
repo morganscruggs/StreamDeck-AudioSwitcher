@@ -90,6 +90,22 @@ void from_json(const nlohmann::json& j, ButtonSettings& bs) {
   if (j.contains("secondaryIcon")) {
     bs.secondaryIcon = j.at("secondaryIcon");
   }
+
+  if (j.contains("iconBrightColor")) {
+    bs.iconBrightColor = j.at("iconBrightColor");
+  }
+
+  if (j.contains("iconDarkColor")) {
+    bs.iconDarkColor = j.at("iconDarkColor");
+  }
+
+  if (j.contains("primaryIconColor")) {
+    bs.primaryIconColor = j.at("primaryIconColor");
+  }
+
+  if (j.contains("secondaryIconColor")) {
+    bs.secondaryIconColor = j.at("secondaryIconColor");
+  }
 }
 
 void to_json(nlohmann::json& j, const ButtonSettings& bs) {
@@ -102,6 +118,10 @@ void to_json(nlohmann::json& j, const ButtonSettings& bs) {
     {"icon", bs.icon},
     {"primaryIcon", bs.primaryIcon},
     {"secondaryIcon", bs.secondaryIcon},
+    {"iconBrightColor", bs.iconBrightColor},
+    {"iconDarkColor", bs.iconDarkColor},
+    {"primaryIconColor", bs.primaryIconColor},
+    {"secondaryIconColor", bs.secondaryIconColor},
   };
 }
 
