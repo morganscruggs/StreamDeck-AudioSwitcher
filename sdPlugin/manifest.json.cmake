@@ -17,16 +17,16 @@
     },
     {
       "SupportedInMultiActions": true,
-      "Icon": "active",
+      "Icon": "AudioDevicesIcons/headphones_bright",
       "Name": "Set Audio Device",
       "Tooltip": "Set a specific audio device",
       "UUID": "com.morganscruggs.audioswitcherplus.set",
       "States": [
         {
-          "Image": "active"
+          "Image": "AudioDevicesIcons/headphones_bright"
         },
         {
-          "Image": "inactive"
+          "Image": "AudioDevicesIcons/headphones_dark"
         }
       ]
     }

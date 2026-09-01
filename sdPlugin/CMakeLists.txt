@@ -17,3 +17,9 @@ install(
   DESTINATION
   ${CMAKE_INSTALL_PREFIX}
 )
+install(
+  DIRECTORY
+  AudioDevicesIcons
+  DESTINATION
+  ${CMAKE_INSTALL_PREFIX}
+)

@@ -83,6 +83,9 @@ class AudioSwitcherStreamDeckPlugin : public ESDBasePlugin {
 
   std::map<std::string, Button> mButtons;
   DefaultChangeCallbackHandle mCallbackHandle;
+  // Cached once at startup - StreamDeckSDK's GetPluginDirectoryPath() only
+  // returns a valid path on its first call.
+  std::string mIconsDirectory;
 
   void OnDefaultDeviceChanged(
     AudioDeviceDirection direction,
@@ -90,4 +93,5 @@ class AudioSwitcherStreamDeckPlugin : public ESDBasePlugin {
     const std::string& activeAudioDeviceID);
   void UpdateState(const std::string& context, const std::string& device = "");
   void FillButtonDeviceInfo(const std::string& context);
+  void ApplyIcon(const std::string& context);
 };

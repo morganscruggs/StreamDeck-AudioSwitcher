@@ -23,11 +23,21 @@ LICENSE file.
 #include <AudioDevices/AudioDevices.h>
 #include <StreamDeckSDK/EPLJSONUtils.h>
 #include <StreamDeckSDK/ESDConnectionManager.h>
+#include <StreamDeckSDK/ESDFilesystem.h>
 #include <StreamDeckSDK/ESDLogger.h>
+#include <StreamDeckSDK/ESDUtilities.h>
 
+#include <websocketpp/base64/base64.hpp>
+
+#include <algorithm>
 #include <atomic>
+#include <cctype>
+#include <fstream>
 #include <functional>
+#include <iterator>
 #include <mutex>
+#include <optional>
+#include <set>
 
 #ifdef _MSC_VER
 #include <objbase.h>
@@ -84,6 +94,94 @@ constexpr std::string_view SET_ACTION_ID{
 constexpr std::string_view TOGGLE_ACTION_ID{
   "com.morganscruggs.audioswitcherplus.toggle"};
 
+std::string ToLower(std::string s) {
+  std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) {
+    return static_cast<char>(std::tolower(c));
+  });
+  return s;
+}
+
+bool EndsWith(const std::string& s, const std::string& suffix) {
+  return s.size() >= suffix.size()
+    && s.compare(s.size() - suffix.size(), suffix.size(), suffix) == 0;
+}
+
+// Icon files live as `<id>_bright.png` / `<id>_dark.png` pairs; matching is
+// case-insensitive since the files aren't guaranteed to be consistently
+// cased.
+std::optional<ESD::filesystem::path> FindIconFile(
+  const std::string& iconsDirectory,
+  const std::string& iconID,
+  const std::string& suffix) {
+  if (iconsDirectory.empty()) {
+    return std::nullopt;
+  }
+  std::error_code ec;
+  const auto wanted = ToLower(iconID) + suffix;
+  for (const auto& entry :
+       ESD::filesystem::directory_iterator(iconsDirectory, ec)) {
+    if (!entry.is_regular_file()) {
+      continue;
+    }
+    const auto& path = entry.path();
+    if (ToLower(path.extension().string()) != ".png") {
+      continue;
+    }
+    if (ToLower(path.stem().string()) == wanted) {
+      return path;
+    }
+  }
+  return std::nullopt;
+}
+
+json GetAvailableIconSets(const std::string& iconsDirectory) {
+  auto result = json::array();
+  if (iconsDirectory.empty()) {
+    return result;
+  }
+
+  std::set<std::string> ids;
+  std::error_code ec;
+  for (const auto& entry :
+       ESD::filesystem::directory_iterator(iconsDirectory, ec)) {
+    if (!entry.is_regular_file()) {
+      continue;
+    }
+    const auto& path = entry.path();
+    if (ToLower(path.extension().string()) != ".png") {
+      continue;
+    }
+    const auto stem = ToLower(path.stem().string());
+    for (const std::string& suffix: {"_bright", "_dark"}) {
+      if (EndsWith(stem, suffix)) {
+        ids.insert(stem.substr(0, stem.size() - suffix.size()));
+        break;
+      }
+    }
+  }
+
+  for (const auto& id: ids) {
+    auto label = id;
+    if (!label.empty()) {
+      label[0] = static_cast<char>(std::toupper(label[0]));
+    }
+    result.push_back({{"id", id}, {"label", label}});
+  }
+  return result;
+}
+
+std::string ReadFileAsBase64(const ESD::filesystem::path& path) {
+  ESD::ifstream file(path, std::ios::binary);
+  if (!file) {
+    return {};
+  }
+  const std::istreambuf_iterator<char> begin(file), end;
+  const std::string contents(begin, end);
+  return websocketpp::base64_encode(
+    reinterpret_cast<const unsigned char*>(contents.data()),
+    contents.size());
+}
+
 bool FillAudioDeviceInfo(AudioDeviceInfo& di) {
   if (di.id.empty()) {
     return false;
@@ -109,6 +207,13 @@ AudioSwitcherStreamDeckPlugin::AudioSwitcherStreamDeckPlugin() {
 #endif
   mCallbackHandle = AddDefaultAudioDeviceChangeCallback(std::bind_front(
     &AudioSwitcherStreamDeckPlugin::OnDefaultDeviceChanged, this));
+
+  // GetPluginDirectoryPath() only returns a valid path on its first call
+  // (subsequent calls return an empty path), so cache it once here.
+  const auto pluginDir = ESDUtilities::GetPluginDirectoryPath();
+  if (!pluginDir.empty()) {
+    mIconsDirectory = (pluginDir / "AudioDevicesIcons").string();
+  }
 }
 
 AudioSwitcherStreamDeckPlugin::~AudioSwitcherStreamDeckPlugin() {
@@ -238,6 +343,7 @@ void AudioSwitcherStreamDeckPlugin::WillAppearForAction(
 
   UpdateState(inContext);
   FillButtonDeviceInfo(inContext);
+  ApplyIcon(inContext);
 }
 
 void AudioSwitcherStreamDeckPlugin::FillButtonDeviceInfo(
@@ -249,6 +355,36 @@ void AudioSwitcherStreamDeckPlugin::FillButtonDeviceInfo(
   if (filledPrimary || filledSecondary) {
     ESDDebug("Backfilling settings to {}", json(settings).dump());
     mConnectionManager->SetSettings(settings, context);
+  }
+}
+
+void AudioSwitcherStreamDeckPlugin::ApplyIcon(const std::string& context) {
+  const auto it = mButtons.find(context);
+  if (it == mButtons.end() || it->second.action != SET_ACTION_ID) {
+    return;
+  }
+  // No explicit choice yet defaults to the headphones icon (works for both
+  // input and output buttons) rather than the plugin's built-in generic
+  // images.
+  const auto& iconID = it->second.settings.icon.empty()
+    ? std::string {"headphones"}
+    : it->second.settings.icon;
+
+  const auto brightFile = FindIconFile(mIconsDirectory, iconID, "_bright");
+  if (brightFile) {
+    mConnectionManager->SetImage(
+      ReadFileAsBase64(*brightFile),
+      context,
+      kESDSDKTarget_HardwareAndSoftware,
+      0);
+  }
+  const auto darkFile = FindIconFile(mIconsDirectory, iconID, "_dark");
+  if (darkFile) {
+    mConnectionManager->SetImage(
+      ReadFileAsBase64(*darkFile),
+      context,
+      kESDSDKTarget_HardwareAndSoftware,
+      1);
   }
 }
 
@@ -283,6 +419,17 @@ void AudioSwitcherStreamDeckPlugin::SendToPlugin(
         {"event", event},
         {"outputDevices", outputList},
         {"inputDevices", inputList},
+      }));
+    return;
+  }
+
+  if (event == "getIconList") {
+    mConnectionManager->SendToPropertyInspector(
+      inAction,
+      inContext,
+      json({
+        {"event", event},
+        {"icons", GetAvailableIconSets(mIconsDirectory)},
       }));
     return;
   }

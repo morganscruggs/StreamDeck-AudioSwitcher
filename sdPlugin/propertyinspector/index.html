@@ -10,6 +10,49 @@
       display: none;
     }
 
+    .icon-picker {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .icon-option {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 56px;
+      padding: 4px;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      cursor: pointer;
+      background: none;
+    }
+
+    .icon-option:hover {
+      border-color: #666;
+    }
+
+    .icon-option.selected {
+      border-color: #4a90e2;
+      background: rgba(74, 144, 226, 0.15);
+    }
+
+    .icon-option img {
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
+    }
+
+    .icon-option span {
+      font-size: 10px;
+      margin-top: 2px;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+
   </style>
 </head>
 
@@ -66,6 +109,10 @@
         <option value="Fuzzy">Fuzzy</option>
       </select>
     </div>
+    <div type="select" class="sdpi-item hidden" id="iconDiv">
+      <div class="sdpi-item-label">Icon</div>
+      <div class="sdpi-item-value icon-picker" id="iconPicker"></div>
+    </div>
     <div type="checkbox" class="sdpi-item">
       <div class="sdpi-item-label">Device list</div>
       <div class="sdpi-item-value">
@@ -101,6 +148,7 @@
       actionInfo,
       inputDevices,
       outputDevices,
+      availableIcons,
       settings,
       ctx;
 
@@ -109,6 +157,13 @@
 
     function receivedDataFromPlugin(jsonObj) {
       const payload = jsonObj['payload'];
+
+      if (payload['event'] === "getIconList") {
+        availableIcons = payload['icons'];
+        renderIconPicker();
+        return;
+      }
+
       if (payload['event'] !== "getDeviceList") {
         return;
       }
@@ -139,6 +194,7 @@
       outputDevices = payload['outputDevices'];
 
       updateDeviceLists(isInput ? inputDevices : outputDevices);
+      renderIconPicker();
       document.getElementById('mainWrapper').classList.remove('hidden');
       saveSettings();
     }
@@ -261,6 +317,7 @@
       } else {
         updateDeviceLists(outputDevices);
       }
+      renderIconPicker();
       saveSettings();
     }
 
@@ -276,6 +333,48 @@
       saveSettings();
     }
 
+    function renderIconPicker() {
+      const picker = document.getElementById('iconPicker');
+      while (picker.firstChild) {
+        picker.removeChild(picker.firstChild);
+      }
+
+      // No explicit choice yet defaults to the headphones icon.
+      const selectedIcon = settings.icon || 'headphones';
+      const isInput = document.getElementById('input').checked;
+      // Speakers are output-only and mics are input-only, so hide whichever
+      // doesn't apply to the currently-selected direction.
+      const hiddenIconId = isInput ? 'speaker' : 'mic';
+
+      const makeOption = (id, label, imageSrc) => {
+        const option = document.createElement('div');
+        option.className = 'icon-option' + (id === selectedIcon ? ' selected' : '');
+        option.onclick = () => selectIcon(id);
+        if (imageSrc) {
+          const img = document.createElement('img');
+          img.src = imageSrc;
+          option.appendChild(img);
+        }
+        const span = document.createElement('span');
+        span.innerText = label;
+        option.appendChild(span);
+        picker.appendChild(option);
+      };
+
+      (availableIcons || []).forEach(icon => {
+        if (icon.id === hiddenIconId) {
+          return;
+        }
+        makeOption(icon.id, icon.label, `../AudioDevicesIcons/${icon.id}_bright.png`);
+      });
+    }
+
+    function selectIcon(id) {
+      settings.icon = id;
+      renderIconPicker();
+      saveSettings();
+    }
+
     function connected(jsonObj) {
       uuid = jsonObj.uuid;
       actionInfo = jsonObj.actionInfo.action;
@@ -287,6 +386,8 @@
       if (actionInfo == "com.morganscruggs.audioswitcherplus.set") {
         document.querySelector('#primaryDeviceDiv .sdpi-item-label').innerText = 'Device';
         document.getElementById('secondaryDeviceDiv').style.display = 'none';
+        document.getElementById('iconDiv').classList.remove('hidden');
+        $SD.api.sendToPlugin(uuid, actionInfo, { event: "getIconList" });
       }
 
       // request settings and list of devices
