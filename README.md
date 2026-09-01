@@ -5,11 +5,12 @@ StreamDeck-AudioSwitcherPlus is a C++ plugin for the Elgato StreamDeck for setti
 > **This is a fork** of [Fred Emmott](https://github.com/fredemmott)'s original [StreamDeck-AudioOutputSwitcher](https://github.com/fredemmott/StreamDeck-AudioOutputSwitcher), extended with additional features (hiding disabled/unplugged devices, hiding device-type suffixes, an "All" button role, stripped Windows device-name prefixes, and per-button custom icons with color selection). All credit for the original plugin, its design, and the underlying audio-switching approach goes to Fred Emmott — please check out [his other Stream Deck plugins](https://github.com/fredemmott) as well.
 
 It supports:
-(original)
+original
 - setting input or output device
 - setting default device or communication device
 - either one-button-per-device, or one button to toggle between two devices
-(new)
+
+new
 - ability to set both default device **and** communication device
 - choosing a custom icon per button(headphones, earbuds, speaker, mic)
 - choosing custom colors for icons in both On and Off modes
