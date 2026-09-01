@@ -96,11 +96,11 @@
       <div class="sdpi-item-label">Icon Color</div>
       <div class="sdpi-item-value">
         <span class="sdpi-item-child">
-          <label class="color-input-label">Bright</label>
+          <label class="color-input-label">On</label>
           <input type="color" id="iconBrightColor" onchange="updateIconColor('iconBrightColor');" />
         </span>
         <span class="sdpi-item-child">
-          <label class="color-input-label">Dark</label>
+          <label class="color-input-label">Off</label>
           <input type="color" id="iconDarkColor" onchange="updateIconColor('iconDarkColor');" />
         </span>
         <span class="sdpi-item-child">
@@ -427,7 +427,7 @@
         if (icon.id === hiddenIconId) {
           return;
         }
-        makeOption(icon.id, icon.label, `../AudioDevicesIcons/${icon.id}_bright.png`);
+        makeOption(icon.id, icon.label, `../AudioDevicesIcons/${icon.id}.png`);
       });
     }
 
@@ -453,9 +453,9 @@
     // icon file's real, unmodified color rather than this exact swatch.
     const ICON_COLOR_DEFAULTS = {
       iconBrightColor: '#ffffff',
-      iconDarkColor: '#1c1c1c',
+      iconDarkColor: '#606060',
       primaryIconColor: '#ffffff',
-      secondaryIconColor: '#1c1c1c',
+      secondaryIconColor: '#ffffff',
     };
 
     function applyIconColorInputs() {

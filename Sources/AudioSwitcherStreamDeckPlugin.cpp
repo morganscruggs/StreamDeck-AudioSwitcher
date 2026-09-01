@@ -106,23 +106,18 @@ std::string ToLower(std::string s) {
   return s;
 }
 
-bool EndsWith(const std::string& s, const std::string& suffix) {
-  return s.size() >= suffix.size()
-    && s.compare(s.size() - suffix.size(), suffix.size(), suffix) == 0;
-}
-
-// Icon files live as `<id>_bright.png` / `<id>_dark.png` pairs; matching is
-// case-insensitive since the files aren't guaranteed to be consistently
-// cased.
+// Icon files live as `<id>.png`; the same artwork is reused and recolored at
+// runtime for both "bright" and "dimmed" states rather than needing separate
+// image files per state. Matching is case-insensitive since the files aren't
+// guaranteed to be consistently cased.
 std::optional<ESD::filesystem::path> FindIconFile(
   const std::string& iconsDirectory,
-  const std::string& iconID,
-  const std::string& suffix) {
+  const std::string& iconID) {
   if (iconsDirectory.empty()) {
     return std::nullopt;
   }
   std::error_code ec;
-  const auto wanted = ToLower(iconID) + suffix;
+  const auto wanted = ToLower(iconID);
   for (const auto& entry :
        ESD::filesystem::directory_iterator(iconsDirectory, ec)) {
     if (!entry.is_regular_file()) {
@@ -156,13 +151,7 @@ json GetAvailableIconSets(const std::string& iconsDirectory) {
     if (ToLower(path.extension().string()) != ".png") {
       continue;
     }
-    const auto stem = ToLower(path.stem().string());
-    for (const std::string& suffix: {"_bright", "_dark"}) {
-      if (EndsWith(stem, suffix)) {
-        ids.insert(stem.substr(0, stem.size() - suffix.size()));
-        break;
-      }
-    }
+    ids.insert(ToLower(path.stem().string()));
   }
 
   for (const auto& id: ids) {
@@ -434,11 +423,10 @@ void ApplyStateImage(
   ESDConnectionManager* connectionManager,
   const std::string& iconsDirectory,
   const std::string& iconID,
-  const std::string& suffix,
   const std::string& hexColor,
   const std::string& context,
   int state) {
-  const auto file = FindIconFile(iconsDirectory, iconID, suffix);
+  const auto file = FindIconFile(iconsDirectory, iconID);
   if (!file) {
     return;
   }
@@ -473,16 +461,20 @@ void AudioSwitcherStreamDeckPlugin::ApplyIcon(const std::string& context) {
       mConnectionManager,
       mIconsDirectory,
       iconID,
-      "_bright",
       button.settings.iconBrightColor,
       context,
       0);
+    // Reuses the same artwork for the inactive state rather than a
+    // separate dark image file, recolored neutral grey by default so it
+    // still reads as "dimmed" without needing per-color dark art.
+    const auto& darkColor = button.settings.iconDarkColor.empty()
+      ? std::string {"#606060"}
+      : button.settings.iconDarkColor;
     ApplyStateImage(
       mConnectionManager,
       mIconsDirectory,
       iconID,
-      "_dark",
-      button.settings.iconDarkColor,
+      darkColor,
       context,
       1);
     return;
@@ -502,7 +494,6 @@ void AudioSwitcherStreamDeckPlugin::ApplyIcon(const std::string& context) {
       mConnectionManager,
       mIconsDirectory,
       primaryIconID,
-      "_bright",
       button.settings.primaryIconColor,
       context,
       0);
@@ -510,7 +501,6 @@ void AudioSwitcherStreamDeckPlugin::ApplyIcon(const std::string& context) {
       mConnectionManager,
       mIconsDirectory,
       secondaryIconID,
-      "_bright",
       button.settings.secondaryIconColor,
       context,
       1);
