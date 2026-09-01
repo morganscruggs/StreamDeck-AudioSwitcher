@@ -13,14 +13,14 @@
       "Icon": "headphones",
       "Name": "Toggle Audio Device",
       "Tooltip": "Switch between two audio devices.",
-      "UUID": "com.fredemmott.audiooutputswitch.toggle"
+      "UUID": "com.morganscruggs.audioswitcherplus.toggle"
     },
     {
       "SupportedInMultiActions": true,
       "Icon": "active",
       "Name": "Set Audio Device",
       "Tooltip": "Set a specific audio device",
-      "UUID": "com.fredemmott.audiooutputswitch.set",
+      "UUID": "com.morganscruggs.audioswitcherplus.set",
       "States": [
         {
           "Image": "active"
@@ -31,14 +31,14 @@
       ]
     }
   ],
-  "Author": "Fred Emmott",
-  "CodePathMac": "sdaudioswitch",
-  "CodePathWin": "sdaudioswitch.exe",
-  "Description": "Toggle or set the active audio devices.",
-  "Name": "Audio Switcher",
+  "Author": "Morgan Scruggs",
+  "CodePathMac": "sdaudioswitchplus",
+  "CodePathWin": "sdaudioswitchplus.exe",
+  "Description": "Toggle or set the active audio devices. Fork of Fred Emmott's Audio Switcher (github.com/fredemmott).",
+  "Name": "Audio Switcher Plus",
   "PropertyInspectorPath": "propertyinspector/index.html",
   "Icon": "headphones",
-  "Category": "Audio Devices",
+  "Category": "Audio Devices Plus",
   "CategoryIcon": "glyphicons-basic-140-adjust",
   "Version": "${CMAKE_PROJECT_VERSION}",
   "OS": [

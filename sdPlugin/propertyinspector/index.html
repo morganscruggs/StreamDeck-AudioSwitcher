@@ -2,7 +2,7 @@
 <html>
 
 <head>
-  <title>com.fredemmott.audioutputswitch PI</title>
+  <title>com.morganscruggs.audioswitcherplus PI</title>
   <meta charset="utf-8" />
   <link rel="stylesheet" href="css/sdpi.css">
   <style>
@@ -133,7 +133,7 @@
       }
 
       document.getElementById('hideUnavailable').checked = settings.hideUnavailable !== false;
-      document.getElementById('hideDeviceType').checked = !!settings.hideDeviceType;
+      document.getElementById('hideDeviceType').checked = settings.hideDeviceType !== false;
 
       inputDevices = payload['inputDevices'];
       outputDevices = payload['outputDevices'];
@@ -284,7 +284,7 @@
       const platform = jsonObj.applicationInfo.application.platform;
       document.getElementById('mainWrapper').classList.add(`platform-${platform}`);
 
-      if (actionInfo == "com.fredemmott.audiooutputswitch.set") {
+      if (actionInfo == "com.morganscruggs.audioswitcherplus.set") {
         document.querySelector('#primaryDeviceDiv .sdpi-item-label').innerText = 'Device';
         document.getElementById('secondaryDeviceDiv').style.display = 'none';
       }

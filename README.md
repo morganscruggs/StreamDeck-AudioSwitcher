@@ -1,6 +1,8 @@
 ## Description
 
-StreamDeck-AudioSwitch is a C++ plugin for the Elgato StreamDeck for setting the default audio device.
+StreamDeck-AudioSwitcherPlus is a C++ plugin for the Elgato StreamDeck for setting the default audio device.
+
+> **This is a fork** of [Fred Emmott](https://github.com/fredemmott)'s original [StreamDeck-AudioOutputSwitcher](https://github.com/fredemmott/StreamDeck-AudioOutputSwitcher), extended with additional features (hiding disabled/unplugged devices, hiding device-type suffixes, an "All" button role, and stripped Windows device-name prefixes). All credit for the original plugin, its design, and the underlying audio-switching approach goes to Fred Emmott — please check out [his other Stream Deck plugins](https://github.com/fredemmott) as well.
 
 It supports:
 - setting input or output device
@@ -15,7 +17,7 @@ For example, this can be useful to switch between headphones and speakers if the
 
 # Installation
 
-Download the `com.fredemmott.audiooutputswitch.streamDeckPlugin` file from [the releases page](https://github.com/fredemmott/StreamDeck-AudioOutputSwitcher/releases), and double-click it.
+Download the `com.morganscruggs.audioswitcherplus.streamDeckPlugin` file from [the releases page](https://github.com/morganscruggs/StreamDeck-AudioSwitcher/releases), and double-click it.
 
 # Notes
 
@@ -43,6 +45,7 @@ If 'fuzzy matching' is required - or not functioning properly for you - ask your
 
 # Thanks
 
+- Thanks to [Fred Emmott](https://github.com/fredemmott) for creating the original [StreamDeck-AudioOutputSwitcher](https://github.com/fredemmott/StreamDeck-AudioOutputSwitcher) that this project is forked from.
 - Thanks to "EreTIk" for finding/documenting the COM interface.
 - Thanks to "LordValgor" for the idea of making this plugin.
 

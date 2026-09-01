@@ -18,13 +18,13 @@ if(WIN32)
 endif()
 
 add_executable(
-  sdaudioswitch
+  sdaudioswitchplus
   ${SOURCES}
 )
-target_link_libraries(sdaudioswitch AudioDeviceLib StreamDeckSDK)
-sign_target(sdaudioswitch)
-install(TARGETS sdaudioswitch DESTINATION ${CMAKE_INSTALL_PREFIX})
+target_link_libraries(sdaudioswitchplus AudioDeviceLib StreamDeckSDK)
+sign_target(sdaudioswitchplus)
+install(TARGETS sdaudioswitchplus DESTINATION ${CMAKE_INSTALL_PREFIX})
 
 if(WIN32)
-  install(FILES "$<TARGET_PDB_FILE:sdaudioswitch>" DESTINATION ${CMAKE_INSTALL_PREFIX})
+  install(FILES "$<TARGET_PDB_FILE:sdaudioswitchplus>" DESTINATION ${CMAKE_INSTALL_PREFIX})
 endif()

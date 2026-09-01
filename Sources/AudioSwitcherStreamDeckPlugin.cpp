@@ -6,8 +6,14 @@
 
 @copyright  (c) 2018, Corsair Memory, Inc.
 @copyright  (c) 2018-present, Fred Emmott.
+@copyright  (c) 2026-present, Morgan Scruggs.
       This source code is licensed under the MIT-style license found in the
 LICENSE file.
+
+      Forked from Fred Emmott's original Audio Switcher plugin:
+      https://github.com/fredemmott/StreamDeck-AudioOutputSwitcher
+      All credit for the original plugin and design goes to Fred Emmott
+      (https://github.com/fredemmott).
 
 **/
 //==============================================================================
@@ -74,9 +80,9 @@ bool IsRoleActive(
 }
 
 constexpr std::string_view SET_ACTION_ID{
-  "com.fredemmott.audiooutputswitch.set"};
+  "com.morganscruggs.audioswitcherplus.set"};
 constexpr std::string_view TOGGLE_ACTION_ID{
-  "com.fredemmott.audiooutputswitch.toggle"};
+  "com.morganscruggs.audioswitcherplus.toggle"};
 
 bool FillAudioDeviceInfo(AudioDeviceInfo& di) {
   if (di.id.empty()) {

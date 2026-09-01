@@ -17,12 +17,12 @@ BEGIN
     BEGIN
         BLOCK "040904E4"
         BEGIN
-            VALUE "CompanyName",      "Frederick Emmott\0"
-            VALUE "FileDescription",  "sdaudioswitch.exe\0"
+            VALUE "CompanyName",      "Morgan Scruggs\0"
+            VALUE "FileDescription",  "sdaudioswitchplus.exe\0"
             VALUE "FileVersion",      VER_FILEVERSION_STR
-            VALUE "LegalCopyright",   "\xa9 Frederick Emmott\0"
-            VALUE "OriginalFilename", "sdaudioswitch.exe\0"
-            VALUE "ProductName",      "StreamDeck-AudioSwitcher\0"
+            VALUE "LegalCopyright",   "\xa9 Morgan Scruggs\0"
+            VALUE "OriginalFilename", "sdaudioswitchplus.exe\0"
+            VALUE "ProductName",      "StreamDeck-AudioSwitcherPlus\0"
             VALUE "ProductVersion",   VER_PRODUCTVERSION_STR
         END
     END

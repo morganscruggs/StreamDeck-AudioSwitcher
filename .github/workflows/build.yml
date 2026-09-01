@@ -26,7 +26,7 @@ jobs:
         run: |
           $args = @(
             "-DCMAKE_BUILD_TYPE=${{matrix.build-type}}"
-            "-DCMAKE_INSTALL_PREFIX=${{github.workspace}}/com.fredemmott.audiooutputswitch.sdPlugin"
+            "-DCMAKE_INSTALL_PREFIX=${{github.workspace}}/com.morganscruggs.audioswitcherplus.sdPlugin"
             "-DCMAKE_OSX_ARCHITECTURES=${{matrix.arch}}"
             "-DCMAKE_OSX_DEPLOYMENT_TARGET=10.11"
           )
@@ -45,8 +45,8 @@ jobs:
         if: matrix.os == 'macos' && matrix.build-type == 'RelWithDebInfo'
         working-directory: build/Sources
         run: |
-          dsymutil sdaudioswitch 
-          strip -x -S sdaudioswitch
+          dsymutil sdaudioswitchplus
+          strip -x -S sdaudioswitchplus
       - name: Isolate artifacts
         shell: pwsh
         if: matrix.build-type == 'RelWithDebInfo'
@@ -56,8 +56,8 @@ jobs:
           Switch ("${{matrix.os}}")
           {
             'macos' {
-              Copy-Item build/Sources/sdaudioswitch $Out/
-              Copy-Item -Recurse build/Sources/sdaudioswitch.dSYM $Out/sdaudioswitch.dSYM
+              Copy-Item build/Sources/sdaudioswitchplus $Out/
+              Copy-Item -Recurse build/Sources/sdaudioswitchplus.dSYM $Out/sdaudioswitchplus.dSYM
             }
             'windows' {
               Copy-Item build/Sources/${{matrix.build-type}}/*.exe $Out/

@@ -14,7 +14,7 @@ endif()
 set(VERSION_BUILD "${DEFAULT_VERSION_BUILD}" CACHE STRING "patch component of version number")
 
 project(
-  com.fredemmott.audiooutputswitch.sdPlugin
+  com.morganscruggs.audioswitcherplus.sdPlugin
   LANGUAGES CXX
   VERSION 3.2.0.${VERSION_BUILD}
 )
