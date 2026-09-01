@@ -32,7 +32,6 @@
     }
   ],
   "Author": "Morgan Scruggs",
-  "CodePathMac": "sdaudioswitchplus",
   "CodePathWin": "sdaudioswitchplus.exe",
   "Description": "Toggle or set the active audio devices. Fork of Fred Emmott's Audio Switcher (github.com/fredemmott).",
   "Name": "Audio Switcher Plus",
@@ -45,10 +44,6 @@
     {
       "Platform": "windows",
       "MinimumVersion": "10"
-    },
-    {
-      "Platform": "mac",
-      "MinimumVersion": "${CMAKE_OSX_DEPLOYMENT_TARGET}"
     }
   ],
   "SDKVersion": 2,

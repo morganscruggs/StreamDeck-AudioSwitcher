@@ -1,6 +1,6 @@
 ## Description
 
-StreamDeck-AudioSwitcherPlus is a C++ plugin for the Elgato StreamDeck for setting the default audio device.
+StreamDeck-AudioSwitcherPlus is a C++ plugin for the Elgato StreamDeck for setting the default audio device. **Windows only** - macOS is not supported.
 
 > **This is a fork** of [Fred Emmott](https://github.com/fredemmott)'s original [StreamDeck-AudioOutputSwitcher](https://github.com/fredemmott/StreamDeck-AudioOutputSwitcher), extended with additional features (hiding disabled/unplugged devices, hiding device-type suffixes, an "All" button role, stripped Windows device-name prefixes, and per-button custom icons with color selection). All credit for the original plugin, its design, and the underlying audio-switching approach goes to Fred Emmott — please check out [his other Stream Deck plugins](https://github.com/fredemmott) as well.
 
@@ -50,9 +50,7 @@ Download the `com.morganscruggs.audioswitcherplus.streamDeckPlugin` file from [t
 This uses undocumented and unsupported Windows APIs. These have apparently worked since Windows 7, but they
 might stop working at any time or have unexpected side effects.
 
-## MacOS: "Sound effects" aren't changing, or are changing when I don't want them to
-
-This is a MacOS bug that only Apple can fix.
+This fork does not support macOS - the upstream project did, but maintaining and testing a Mac build isn't something this fork can commit to. If you're on a Mac, use [the original StreamDeck-AudioOutputSwitcher](https://github.com/fredemmott/StreamDeck-AudioOutputSwitcher) instead.
 
 # Getting Help
 
