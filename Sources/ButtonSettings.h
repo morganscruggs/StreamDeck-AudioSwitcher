@@ -38,6 +38,13 @@ struct ButtonSettings {
   std::string primaryIcon;
   std::string secondaryIcon;
 
+  // "#RRGGBB", or empty to use the icon file's original color. Recolors the
+  // icon in place rather than requiring separate colored image files.
+  std::string iconBrightColor;
+  std::string iconDarkColor;
+  std::string primaryIconColor;
+  std::string secondaryIconColor;
+
   // Changes if there's a fuzzy match
   std::string VolatilePrimaryID() const;
   std::string VolatileSecondaryID() const;
