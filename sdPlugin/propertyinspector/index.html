@@ -113,6 +113,14 @@
       <div class="sdpi-item-label">Icon</div>
       <div class="sdpi-item-value icon-picker" id="iconPicker"></div>
     </div>
+    <div type="select" class="sdpi-item hidden" id="primaryIconDiv">
+      <div class="sdpi-item-label">Primary Icon</div>
+      <div class="sdpi-item-value icon-picker" id="primaryIconPicker"></div>
+    </div>
+    <div type="select" class="sdpi-item hidden" id="secondaryIconDiv">
+      <div class="sdpi-item-label">Secondary Icon</div>
+      <div class="sdpi-item-value icon-picker" id="secondaryIconPicker"></div>
+    </div>
     <div type="checkbox" class="sdpi-item">
       <div class="sdpi-item-label">Device list</div>
       <div class="sdpi-item-value">
@@ -160,7 +168,7 @@
 
       if (payload['event'] === "getIconList") {
         availableIcons = payload['icons'];
-        renderIconPicker();
+        renderAllIconPickers();
         return;
       }
 
@@ -194,7 +202,7 @@
       outputDevices = payload['outputDevices'];
 
       updateDeviceLists(isInput ? inputDevices : outputDevices);
-      renderIconPicker();
+      renderAllIconPickers();
       document.getElementById('mainWrapper').classList.remove('hidden');
       saveSettings();
     }
@@ -317,7 +325,7 @@
       } else {
         updateDeviceLists(outputDevices);
       }
-      renderIconPicker();
+      renderAllIconPickers();
       saveSettings();
     }
 
@@ -333,14 +341,14 @@
       saveSettings();
     }
 
-    function renderIconPicker() {
-      const picker = document.getElementById('iconPicker');
+    function renderIconPicker(pickerId, settingsKey, defaultId) {
+      const picker = document.getElementById(pickerId);
       while (picker.firstChild) {
         picker.removeChild(picker.firstChild);
       }
 
-      // No explicit choice yet defaults to the headphones icon.
-      const selectedIcon = settings.icon || 'headphones';
+      // No explicit choice yet defaults to defaultId.
+      const selectedIcon = settings[settingsKey] || defaultId;
       const isInput = document.getElementById('input').checked;
       // Speakers are output-only and mics are input-only, so hide whichever
       // doesn't apply to the currently-selected direction.
@@ -349,7 +357,7 @@
       const makeOption = (id, label, imageSrc) => {
         const option = document.createElement('div');
         option.className = 'icon-option' + (id === selectedIcon ? ' selected' : '');
-        option.onclick = () => selectIcon(id);
+        option.onclick = () => selectIcon(pickerId, settingsKey, defaultId, id);
         if (imageSrc) {
           const img = document.createElement('img');
           img.src = imageSrc;
@@ -369,10 +377,19 @@
       });
     }
 
-    function selectIcon(id) {
-      settings.icon = id;
-      renderIconPicker();
+    function selectIcon(pickerId, settingsKey, defaultId, id) {
+      settings[settingsKey] = id;
+      renderIconPicker(pickerId, settingsKey, defaultId);
       saveSettings();
+    }
+
+    function renderAllIconPickers() {
+      if (actionInfo === "com.morganscruggs.audioswitcherplus.set") {
+        renderIconPicker('iconPicker', 'icon', 'headphones');
+      } else if (actionInfo === "com.morganscruggs.audioswitcherplus.toggle") {
+        renderIconPicker('primaryIconPicker', 'primaryIcon', 'headphones');
+        renderIconPicker('secondaryIconPicker', 'secondaryIcon', 'speaker');
+      }
     }
 
     function connected(jsonObj) {
@@ -387,10 +404,13 @@
         document.querySelector('#primaryDeviceDiv .sdpi-item-label').innerText = 'Device';
         document.getElementById('secondaryDeviceDiv').style.display = 'none';
         document.getElementById('iconDiv').classList.remove('hidden');
-        $SD.api.sendToPlugin(uuid, actionInfo, { event: "getIconList" });
+      } else if (actionInfo == "com.morganscruggs.audioswitcherplus.toggle") {
+        document.getElementById('primaryIconDiv').classList.remove('hidden');
+        document.getElementById('secondaryIconDiv').classList.remove('hidden');
       }
 
-      // request settings and list of devices
+      // request settings, list of devices, and list of icons
+      $SD.api.sendToPlugin(uuid, actionInfo, { event: "getIconList" });
       $SD.api.sendToPlugin(uuid, actionInfo, { event: "getDeviceList" });
     };
 

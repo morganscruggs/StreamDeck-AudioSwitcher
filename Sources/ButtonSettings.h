@@ -29,8 +29,14 @@ struct ButtonSettings {
   AudioDeviceInfo secondaryDevice;
   DeviceMatchStrategy matchStrategy = DeviceMatchStrategy::ID;
   // Lowercase ID of a bright/dark icon pair in AudioDevicesIcons/, or
-  // empty to use the plugin's built-in default icon.
+  // empty to use the plugin's built-in default icon. Used by the "Set"
+  // action.
   std::string icon;
+  // Used by the "Toggle" action instead of `icon`, since its two states
+  // represent two different devices rather than one device's active/inactive
+  // state.
+  std::string primaryIcon;
+  std::string secondaryIcon;
 
   // Changes if there's a fuzzy match
   std::string VolatilePrimaryID() const;

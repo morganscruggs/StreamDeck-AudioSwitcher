@@ -82,6 +82,14 @@ void from_json(const nlohmann::json& j, ButtonSettings& bs) {
   if (j.contains("icon")) {
     bs.icon = j.at("icon");
   }
+
+  if (j.contains("primaryIcon")) {
+    bs.primaryIcon = j.at("primaryIcon");
+  }
+
+  if (j.contains("secondaryIcon")) {
+    bs.secondaryIcon = j.at("secondaryIcon");
+  }
 }
 
 void to_json(nlohmann::json& j, const ButtonSettings& bs) {
@@ -92,6 +100,8 @@ void to_json(nlohmann::json& j, const ButtonSettings& bs) {
     {"secondary", bs.secondaryDevice},
     {"matchStrategy", bs.matchStrategy},
     {"icon", bs.icon},
+    {"primaryIcon", bs.primaryIcon},
+    {"secondaryIcon", bs.secondaryIcon},
   };
 }
 

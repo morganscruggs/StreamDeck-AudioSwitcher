@@ -358,32 +358,67 @@ void AudioSwitcherStreamDeckPlugin::FillButtonDeviceInfo(
   }
 }
 
-void AudioSwitcherStreamDeckPlugin::ApplyIcon(const std::string& context) {
-  const auto it = mButtons.find(context);
-  if (it == mButtons.end() || it->second.action != SET_ACTION_ID) {
+namespace {
+void ApplyStateImage(
+  ESDConnectionManager* connectionManager,
+  const std::string& iconsDirectory,
+  const std::string& iconID,
+  const std::string& suffix,
+  const std::string& context,
+  int state) {
+  const auto file = FindIconFile(iconsDirectory, iconID, suffix);
+  if (!file) {
     return;
   }
-  // No explicit choice yet defaults to the headphones icon (works for both
-  // input and output buttons) rather than the plugin's built-in generic
-  // images.
-  const auto& iconID = it->second.settings.icon.empty()
-    ? std::string {"headphones"}
-    : it->second.settings.icon;
+  connectionManager->SetImage(
+    ReadFileAsBase64(*file), context, kESDSDKTarget_HardwareAndSoftware, state);
+}
+}// namespace
 
-  const auto brightFile = FindIconFile(mIconsDirectory, iconID, "_bright");
-  if (brightFile) {
-    mConnectionManager->SetImage(
-      ReadFileAsBase64(*brightFile),
-      context,
-      kESDSDKTarget_HardwareAndSoftware,
-      0);
+void AudioSwitcherStreamDeckPlugin::ApplyIcon(const std::string& context) {
+  const auto it = mButtons.find(context);
+  if (it == mButtons.end()) {
+    return;
   }
-  const auto darkFile = FindIconFile(mIconsDirectory, iconID, "_dark");
-  if (darkFile) {
-    mConnectionManager->SetImage(
-      ReadFileAsBase64(*darkFile),
+  const auto& button = it->second;
+
+  if (button.action == SET_ACTION_ID) {
+    // No explicit choice yet defaults to the headphones icon (works for
+    // both input and output buttons) rather than the plugin's built-in
+    // generic images.
+    const auto& iconID = button.settings.icon.empty()
+      ? std::string {"headphones"}
+      : button.settings.icon;
+    ApplyStateImage(
+      mConnectionManager, mIconsDirectory, iconID, "_bright", context, 0);
+    ApplyStateImage(
+      mConnectionManager, mIconsDirectory, iconID, "_dark", context, 1);
+    return;
+  }
+
+  if (button.action == TOGGLE_ACTION_ID) {
+    // The two states represent two different devices, not one device's
+    // active/inactive state, so each gets its own icon choice - defaulting
+    // to the plugin's original headphones/speaker pairing.
+    const auto& primaryIconID = button.settings.primaryIcon.empty()
+      ? std::string {"headphones"}
+      : button.settings.primaryIcon;
+    const auto& secondaryIconID = button.settings.secondaryIcon.empty()
+      ? std::string {"speaker"}
+      : button.settings.secondaryIcon;
+    ApplyStateImage(
+      mConnectionManager,
+      mIconsDirectory,
+      primaryIconID,
+      "_bright",
       context,
-      kESDSDKTarget_HardwareAndSoftware,
+      0);
+    ApplyStateImage(
+      mConnectionManager,
+      mIconsDirectory,
+      secondaryIconID,
+      "_bright",
+      context,
       1);
   }
 }

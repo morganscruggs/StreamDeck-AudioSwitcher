@@ -3,14 +3,14 @@
     {
       "States": [
         {
-          "Image": "headphones"
+          "Image": "AudioDevicesIcons/headphones_bright"
         },
         {
-          "Image": "speakers"
+          "Image": "AudioDevicesIcons/speaker_bright"
         }
       ],
       "SupportedInMultiActions": false,
-      "Icon": "headphones",
+      "Icon": "AudioDevicesIcons/headphones_bright",
       "Name": "Toggle Audio Device",
       "Tooltip": "Switch between two audio devices.",
       "UUID": "com.morganscruggs.audioswitcherplus.toggle"
