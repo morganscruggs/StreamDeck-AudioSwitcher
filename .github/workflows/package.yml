@@ -14,7 +14,7 @@ jobs:
         working-directory: build
         shell: pwsh
         run: |
-          cmake ${{github.workspace}}/source `
+          cmake ${{github.workspace}}/source/audio-switcher-exe `
             "-DCMAKE_INSTALL_PREFIX=${{runner.temp}}/com.morganscruggs.audioswitcherplus.sdPlugin"
       - name: Install static files
         working-directory: build/sdPlugin

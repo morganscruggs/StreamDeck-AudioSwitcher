@@ -1,0 +1,64 @@
+{
+	"Actions": [
+		{
+			"Name": "Toggle Audio Device",
+			"UUID": "com.morgan-scruggs.audioswitcherplus-node.toggle",
+			"Icon": "AudioDevicesIcons/headphones",
+			"Tooltip": "Switch between two audio devices.",
+			"PropertyInspectorPath": "ui/index.html",
+			"Controllers": [
+				"Keypad"
+			],
+			"SupportedInMultiActions": false,
+			"States": [
+				{
+					"Image": "AudioDevicesIcons/headphones"
+				},
+				{
+					"Image": "AudioDevicesIcons/speaker"
+				}
+			]
+		},
+		{
+			"Name": "Set Audio Device",
+			"UUID": "com.morgan-scruggs.audioswitcherplus-node.set",
+			"Icon": "AudioDevicesIcons/headphones",
+			"Tooltip": "Set a specific audio device",
+			"PropertyInspectorPath": "ui/index.html",
+			"Controllers": [
+				"Keypad"
+			],
+			"SupportedInMultiActions": true,
+			"States": [
+				{
+					"Image": "AudioDevicesIcons/headphones"
+				},
+				{
+					"Image": "AudioDevicesIcons/headphones"
+				}
+			]
+		}
+	],
+	"Author": "Morgan Scruggs",
+	"CodePath": "bin/plugin.js",
+	"Description": "Toggle or set the active audio devices (Node/no-standalone-exe build). Fork of Fred Emmott's Audio Switcher (github.com/fredemmott).",
+	"Name": "Audio Switcher Plus (Node)",
+	"Icon": "AudioDevicesIcons/headphones",
+	"Category": "Audio Devices Plus (Node)",
+	"CategoryIcon": "AudioDevicesIcons/speaker",
+	"Version": "0.1.0.0",
+	"OS": [
+		{
+			"Platform": "windows",
+			"MinimumVersion": "10"
+		}
+	],
+	"SDKVersion": 3,
+	"Software": {
+		"MinimumVersion": "7.1"
+	},
+	"Nodejs": {
+		"Version": "24"
+	},
+	"UUID": "com.morgan-scruggs.audioswitcherplus-node"
+}

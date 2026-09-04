@@ -19,7 +19,7 @@ install(
 )
 install(
   DIRECTORY
-  AudioDevicesIcons
+  ../../shared/AudioDevicesIcons
   DESTINATION
   ${CMAKE_INSTALL_PREFIX}
 )

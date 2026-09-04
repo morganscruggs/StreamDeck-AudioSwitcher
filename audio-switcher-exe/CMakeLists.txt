@@ -55,9 +55,13 @@ include("AudioDeviceLib.cmake")
 include("StreamDeckSDK.cmake")
 include("sign_target.cmake")
 
-set_default_install_dir_to_streamdeck_plugin_dir()
+set_default_install_dir_to_repo_root()
 
 add_subdirectory(Sources)
 add_subdirectory(sdPlugin)
 
-install(FILES LICENSE DESTINATION ${CMAKE_INSTALL_PREFIX})
+install(FILES ../LICENSE DESTINATION ${CMAKE_INSTALL_PREFIX})
+
+# Must be last - it copies whatever CMAKE_INSTALL_PREFIX ends up containing, so every other install()
+# rule above needs to have already run.
+sync_install_to_streamdeck_plugin_dir()

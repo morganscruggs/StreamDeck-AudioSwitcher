@@ -1,4 +1,6 @@
-# Troubleshooting
+# Troubleshooting (native/exe build)
+
+This covers the native C++ build in this folder. If you're using [the Node-based build](../audio-switcher-node/) instead, see [its own troubleshooting guide](../audio-switcher-node/TROUBLESHOOTING.md).
 
 ## No property page, or does not work
 
