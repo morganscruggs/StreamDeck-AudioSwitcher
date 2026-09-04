@@ -151,7 +151,16 @@ json GetAvailableIconSets(const std::string& iconsDirectory) {
     if (ToLower(path.extension().string()) != ".png") {
       continue;
     }
-    ids.insert(ToLower(path.stem().string()));
+    // Each icon has a "foo.png" / "foo@2x.png" pair for Stream Deck's
+    // retina displays; both must collapse to the same "foo" id or the
+    // @2x file shows up as a bogus extra icon in the picker.
+    auto stem = ToLower(path.stem().string());
+    constexpr std::string_view suffix2x = "@2x";
+    if (stem.size() > suffix2x.size()
+        && stem.compare(stem.size() - suffix2x.size(), suffix2x.size(), suffix2x) == 0) {
+      stem.erase(stem.size() - suffix2x.size());
+    }
+    ids.insert(stem);
   }
 
   for (const auto& id: ids) {

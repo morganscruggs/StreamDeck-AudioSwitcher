@@ -16,7 +16,7 @@ set(VERSION_BUILD "${DEFAULT_VERSION_BUILD}" CACHE STRING "patch component of ve
 project(
   com.morganscruggs.audioswitcherplus.sdPlugin
   LANGUAGES CXX
-  VERSION 0.1.0.${VERSION_BUILD}
+  VERSION 0.1.1.${VERSION_BUILD}
 )
 
 set(CMAKE_CXX_STANDARD 20)
